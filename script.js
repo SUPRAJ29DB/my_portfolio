@@ -1,0 +1,30 @@
+import * as THREE from 'three';
+const canvas=document.querySelector('#scene');
+document.body.appendChild(canvas); // Keep the animated 3D scene fixed behind every section while scrolling.
+const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,1,.1,100);camera.position.set(0,0,10);
+scene.add(new THREE.AmbientLight(0x9bbdff,1.8));
+const key=new THREE.PointLight(0x4d91ff,32,30);key.position.set(4,4,6);scene.add(key);
+const violet=new THREE.PointLight(0x8b5cf6,18,25);violet.position.set(-4,-3,3);scene.add(violet);
+const group=new THREE.Group();scene.add(group);
+function wireBox(size,color,x,y,z,rotation=0){const g=new THREE.BoxGeometry(size,size,size);const m=new THREE.MeshBasicMaterial({color,wireframe:true,transparent:true,opacity:.9});const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.rotation.set(rotation*.7,rotation,rotation*.35);group.add(o);return o}
+const objects=[];
+objects.push(wireBox(2.0,0x648fff,-1.45,.25,0,.2));
+objects.push(wireBox(1.05,0x8b7cff,1.7,1.45,-.5,.5));
+objects.push(wireBox(1.25,0x55baff,1.85,-1.45,.1,.35));
+objects.push(wireBox(.65,0x6a8fff,-2.65,1.65,-1,.4));
+objects.push(wireBox(.55,0xb39aff,.25,-2.2,-.8,.3));
+const icoGeo=new THREE.IcosahedronGeometry(.95,1);
+const ico=new THREE.Mesh(icoGeo,new THREE.MeshBasicMaterial({color:0x588cff,wireframe:true,transparent:true,opacity:.95}));
+ico.position.set(.2,.15,-1.6);ico.rotation.set(.4,.2,0);group.add(ico);objects.push(ico);
+const dotsGeo=new THREE.BufferGeometry();const positions=[];for(let i=0;i<420;i++){positions.push((Math.random()-.5)*9,(Math.random()-.5)*6,(Math.random()-.5)*4-1)}dotsGeo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+const dots=new THREE.Points(dotsGeo,new THREE.PointsMaterial({color:0x7caeff,size:.022,transparent:true,opacity:.8}));group.add(dots);
+const ring=new THREE.Mesh(new THREE.TorusGeometry(2.45,.008,8,120),new THREE.MeshBasicMaterial({color:0x397aff,transparent:true,opacity:.42}));ring.rotation.set(.8,.25,.25);group.add(ring);
+let mouseX=0,mouseY=0,targetX=0,targetY=0;
+window.addEventListener('pointermove',e=>{mouseX=(e.clientX/window.innerWidth-.5)*.55;mouseY=(e.clientY/window.innerHeight-.5)*.35},{passive:true});
+function resize(){const rect=canvas.getBoundingClientRect();const w=Math.max(1,rect.width),h=Math.max(1,rect.height);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(canvas);resize();
+const clock=new THREE.Clock();
+function animate(){requestAnimationFrame(animate);const t=clock.getElapsedTime();targetX+=(mouseX-targetX)*.025;targetY+=(mouseY-targetY)*.025;group.rotation.y=t*.22+targetX;group.rotation.x=Math.sin(t*.45)*.12+targetY;objects.forEach((o,i)=>{o.rotation.x=o.userData.startRotX+t*(.35+i*.06);o.rotation.y=o.userData.startRotY+t*(.48+i*.075);o.rotation.z=o.userData.startRotZ+t*(.22+i*.04);o.position.y=o.userData.baseY+Math.sin(t*(.8+i*.09)+i*1.8)*.3;o.position.x=o.userData.baseX+Math.cos(t*(.55+i*.07)+i*1.3)*.22});dots.rotation.y=t*.05;ring.rotation.z=t*.12;ico.rotation.z=Math.sin(t*.7)*.4;renderer.render(scene,camera)}objects.forEach(o=>{o.userData.baseX=o.position.x;o.userData.baseY=o.position.y;o.userData.startRotX=o.rotation.x;o.userData.startRotY=o.rotation.y;o.userData.startRotZ=o.rotation.z});animate();
+document.querySelector('#year').textContent=new Date().getFullYear();
